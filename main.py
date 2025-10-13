@@ -29,7 +29,7 @@ def estructurar_informacion_con_gemini(texto_pdf: str) -> str:
     en formato TSV (Tab-Separated Values).
     """
     # Usamos el modelo 'flash' que es rápido y eficiente, como solicitaste.
-    # Nota: 'gemini-2.5-flash' no es un modelo válido actualmente. Usamos 'gemini-1.5-flash-latest'.
+    # Nota: 'gemini-2.5-flash' no es un modelo válido actualmente. Usamos 'gemini-1.5-flash'.
     model = genai.GenerativeModel('models/gemini-2.5-flash')
 
     # Prompt ajustado a tus especificaciones, con instrucciones claras para el formato de salida.
@@ -49,7 +49,8 @@ INSTRUCCIONES IMPORTANTES:
 5.  Las fechas deben estar en formato DD/MM/YYYY.
 6.  NO incluyas la línea de cabecera en tu respuesta. Devuelve únicamente los datos.
 7.  Asegúrate de que cada línea de tu respuesta corresponda a una línea de detalle del documento.
-8.  La columna Importe debe ser un número decimal (float).
+8.  La columna Importe debe conservar la separacion decimal tal y como se muestra en el documento.
+9.  No hagas comentarios adicionales, devuelve solo el TSV.
 
 Texto del documento a procesar:
 ---
@@ -105,6 +106,10 @@ def procesar_pdf(ruta_pdf: str) -> bool:
         # Usamos StringIO para leer la cadena de texto TSV como si fuera un archivo
         df = pd.read_csv(StringIO(datos_tsv), sep='\t', header=None, names=columnas)
         
+        # Agregar la columna con el nombre del archivo origen
+        nombre_archivo = os.path.basename(ruta_pdf)
+        df['Archivo_Origen'] = nombre_archivo
+        
         # Asegurarse de que el directorio de salida existe
         os.makedirs("output", exist_ok=True)
         
@@ -148,12 +153,48 @@ def main():
         
     print(f"📁 Encontrados {len(archivos_pdf)} PDF(s) para procesar.")
     
-    exitos = sum(1 for archivo in archivos_pdf if procesar_pdf(os.path.join(directorio_pdfs, archivo)))
+    # Procesar cada PDF y mantener un registro de los archivos procesados exitosamente
+    archivos_procesados = []
+    for archivo in archivos_pdf:
+        ruta_completa = os.path.join(directorio_pdfs, archivo)
+        if procesar_pdf(ruta_completa):
+            archivos_procesados.append(archivo)
+    
+    # Combinar todos los TSV procesados en un solo archivo
+    if archivos_procesados:
+        print("\n=== Combinando archivos TSV ===")
+        dfs = []
+        for archivo in archivos_procesados:
+            nombre_base = os.path.splitext(archivo)[0]
+            ruta_tsv = os.path.join("output", f"{nombre_base}.tsv")
+            try:
+                # Leer el TSV sin encabezados y agregar la columna con el nombre del PDF
+                columnas = [
+                    'Referencia Única', 'Nombre del Librado', 'IBAN', 'Importe', 
+                    'Vencimiento', 'Emisor', 'Identificación del Emisor', 
+                    'Referencia del Fichero', 'Fecha de Recepción', 'Fecha del Documento', 
+                    'Referencia Única del Documento', 'Archivo_Origen'
+                ]
+                df = pd.read_csv(ruta_tsv, sep='\t', names=columnas, skiprows=1)  # Saltamos la primera fila (encabezados)
+                dfs.append(df)
+                print(f"✓ Leído: {archivo}")
+            except Exception as e:
+                print(f"❌ Error al leer {archivo}: {e}")
+        
+        if dfs:
+            # Combinar todos los DataFrames
+            df_combinado = pd.concat(dfs, ignore_index=True)
+            
+            # Guardar el archivo combinado
+            ruta_combinado = os.path.join("output", "todos_los_documentos.tsv")
+            df_combinado.to_csv(ruta_combinado, sep='\t', index=False, encoding='utf-8')
+            print(f"\n✅ Archivo combinado creado en: {ruta_combinado}")
+            print(f"   Total de registros: {len(df_combinado)}")
     
     print("\n=== Resumen del Procesamiento ===")
     print(f"Total de archivos: {len(archivos_pdf)}")
-    print(f"✅ Procesados exitosamente: {exitos}")
-    print(f"❌ Fallidos: {len(archivos_pdf) - exitos}")
+    print(f"✅ Procesados exitosamente: {len(archivos_procesados)}")
+    print(f"❌ Fallidos: {len(archivos_pdf) - len(archivos_procesados)}")
 
 if __name__ == "__main__":
     main()
