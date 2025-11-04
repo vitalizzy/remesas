@@ -3,3 +3,4 @@ PyMuPDF
 pandas
 python-dotenv
 tk  # Para el selector de carpetas (generalmente viene incluido con Python)
+pyinstaller  # Para crear el ejecutable

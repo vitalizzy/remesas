@@ -22,13 +22,22 @@ Este proyecto es una herramienta que extrae datos estructurados de archivos PDF 
   - Fechas (Recepción, Documento)
   - Archivo de Origen
 
-## 📋 Requisitos Previos
+## 📋 Opciones de Instalación
 
+### Opción 1: Para Usuarios Finales (Sin necesidad de Python)
+
+1. Descarga el archivo `Extractor_Remesas.exe` de la sección [Releases](../../releases)
+2. Descarga el archivo de configuración `.env` proporcionado
+3. Coloca ambos archivos en la misma carpeta
+4. Edita el archivo `.env` con tu API Key de Google Gemini
+
+### Opción 2: Para Desarrolladores (Con Python)
+
+Requisitos:
 - Python 3.8 o superior
 - Una API Key de Google Gemini
 
-## 🔧 Instalación
-
+Pasos:
 1. Clona el repositorio:
 ```bash
 git clone <url-del-repositorio>
@@ -56,19 +65,47 @@ pip install -r requirements.txt
 GOOGLE_API_KEY=tu_api_key_aqui
 ```
 
+### Creación del Ejecutable (Para Desarrolladores)
+
+Si deseas crear tu propio ejecutable:
+
+1. Asegúrate de tener todas las dependencias instaladas:
+```bash
+pip install -r requirements.txt
+```
+
+2. Ejecuta el script de construcción:
+```bash
+python build_exe.py
+```
+
+3. El ejecutable se creará en la carpeta `dist` como `Extractor_Remesas.exe`
+
 ## 📁 Estructura del Proyecto
 
 ```
 .
 ├── main.py                # Script principal
+├── build_exe.py          # Script para crear el ejecutable
 ├── test_pdf_extraction.py # Herramienta de prueba para extracción de PDF
 ├── test_process.py       # Herramienta de prueba para procesamiento
-├── requirements.txt      # Dependencias del proyecto
-├── .env                 # Configuración de API Key (no incluido en git)
-└── README.md            # Este archivo
+├── resources/           # Recursos del proyecto (iconos, etc.)
+├── requirements.txt     # Dependencias del proyecto
+├── .env                # Configuración de API Key (no incluido en git)
+└── README.md           # Este archivo
+```
+
+### Archivos Generados
+```
+.
+├── build/              # Archivos temporales de construcción
+├── dist/              # Contiene el ejecutable final
+└── Extractor_Remesas.spec  # Especificaciones de PyInstaller
 ```
 
 ## 🚀 Uso
+
+### Para usuarios con Python instalado:
 
 1. Ejecuta el script:
 ```bash
@@ -76,6 +113,26 @@ python main.py
 ```
 
 2. Selecciona la carpeta que contiene tus archivos PDF usando el diálogo que aparece
+
+### Para usuarios sin Python (usando el ejecutable):
+
+1. Descarga el archivo `Extractor_Remesas.exe` de la sección de releases
+2. Haz doble clic en `Extractor_Remesas.exe`
+3. Selecciona la carpeta que contiene tus archivos PDF usando el diálogo que aparece
+
+### Para crear el ejecutable (desarrolladores):
+
+1. Instala todas las dependencias:
+```bash
+pip install -r requirements.txt
+```
+
+2. Ejecuta el script de construcción:
+```bash
+python build_exe.py
+```
+
+3. El ejecutable se creará en la carpeta `dist` como `Extractor_Remesas.exe`
 
 3. El script:
    - Procesará todos los PDFs en la carpeta seleccionada
@@ -107,11 +164,27 @@ El script genera dos tipos de archivos en la carpeta `output`:
 
 ## ⚠️ Notas Importantes
 
+### Seguridad y Configuración
 - Asegúrate de mantener tu API Key segura y no compartirla
+- El archivo `.env` debe estar en la misma carpeta que el ejecutable
+- Si usas el ejecutable, es normal que algunos antivirus muestren una advertencia la primera vez
+
+### Uso y Procesamiento
 - El script procesará todos los PDFs en la carpeta seleccionada
 - Los archivos de salida se crearán en una subcarpeta `output` dentro de la carpeta seleccionada
 - Los archivos de salida se sobrescribirán si ya existen
 - El campo `Archivo_Origen` permite rastrear de qué PDF proviene cada registro
+
+### Requisitos del Sistema
+- Sistema operativo: Windows 10/11
+- Espacio en disco: ~100MB para el ejecutable
+- Memoria RAM: Mínimo 4GB recomendado
+- Conexión a Internet: Requerida para la API de Gemini
+
+### Solución de Problemas
+- Si el programa no inicia, verifica que el archivo `.env` esté presente y contenga la API Key
+- Si recibes un error de la API, verifica tu conexión a Internet y la validez de tu API Key
+- Para problemas con archivos específicos, revisa que los PDFs no estén corruptos o protegidos
 
 ## 📄 Licencia
 

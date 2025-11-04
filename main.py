@@ -1,4 +1,5 @@
 import os
+import sys
 import fitz  # PyMuPDF
 import pandas as pd
 import google.generativeai as genai
@@ -6,7 +7,23 @@ from dotenv import load_dotenv
 from io import StringIO
 import re
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
+
+def resource_path(relative_path):
+    """Obtiene la ruta absoluta al recurso, funciona tanto en desarrollo como en el ejecutable"""
+    try:
+        # PyInstaller crea un temp folder y almacena la ruta en _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+def mostrar_error(mensaje):
+    """Muestra un mensaje de error en una ventana emergente"""
+    root = tk.Tk()
+    root.withdraw()
+    messagebox.showerror("Error", mensaje)
+    root.destroy()
 
 def extraer_texto_pdf(ruta_pdf: str) -> str:
     """
@@ -143,11 +160,14 @@ def main():
     """
     Función principal que procesa todos los PDFs en el directorio seleccionado.
     """
-    load_dotenv()
+    # Cargar .env desde la ubicación correcta cuando se ejecuta como .exe
+    env_path = resource_path('.env')
+    load_dotenv(env_path)
     api_key = os.getenv("GOOGLE_API_KEY")
     
     if not api_key:
-        print("❌ Error: No se encontró la variable de entorno GOOGLE_API_KEY en el archivo .env")
+        error_msg = "No se encontró la API Key de Google.\n\nAsegúrate de que el archivo .env existe y contiene la variable GOOGLE_API_KEY."
+        mostrar_error(error_msg)
         return
     genai.configure(api_key=api_key)
     print("✓ API Key de Google configurada.")
