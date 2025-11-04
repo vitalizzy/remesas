@@ -4,6 +4,8 @@ import fitz
 import pandas as pd
 import google.generativeai as genai
 from dotenv import load_dotenv
+import tkinter as tk
+from tkinter import filedialog
 
 def test_procesamiento_completo(ruta_pdf: str) -> None:
     """
@@ -107,15 +109,16 @@ Texto del documento a procesar:
         # 3. Crear DataFrame y CSV
         print("\n3️⃣ Creando archivo CSV...")
         
-        # Crear directorio si no existe
-        os.makedirs("output", exist_ok=True)
+        # Crear directorio de salida en la misma carpeta que el PDF
+        directorio_salida = os.path.join(os.path.dirname(ruta_pdf), 'output')
+        os.makedirs(directorio_salida, exist_ok=True)
         
         # Crear DataFrame
         df = pd.DataFrame([datos])
         
         # Guardar CSV
         nombre_base = os.path.splitext(os.path.basename(ruta_pdf))[0]
-        ruta_salida = os.path.join("output", f"{nombre_base}.csv")
+        ruta_salida = os.path.join(directorio_salida, f"{nombre_base}.csv")
         df.to_csv(ruta_salida, index=False, encoding='utf-8')
         
         # Verificar que el archivo se creó
@@ -134,11 +137,24 @@ Texto del documento a procesar:
         print(f"❌ Error durante el procesamiento: {str(e)}")
         return
 
+def seleccionar_carpeta():
+    """
+    Muestra un diálogo para seleccionar una carpeta y retorna la ruta seleccionada.
+    """
+    root = tk.Tk()
+    root.withdraw()  # Ocultar la ventana principal
+    carpeta = filedialog.askdirectory(title="Selecciona la carpeta con los archivos PDF")
+    return carpeta if carpeta else None
+
 def main_test():
     """
     Función principal de prueba
     """
-    directorio_pdfs = "my_pdfs"
+    # Mostrar diálogo para seleccionar carpeta
+    directorio_pdfs = seleccionar_carpeta()
+    if not directorio_pdfs:
+        print("❌ Error: No se seleccionó ninguna carpeta.")
+        return
     
     if not os.path.exists(directorio_pdfs):
         print(f"❌ Error: No se encuentra el directorio {directorio_pdfs}")

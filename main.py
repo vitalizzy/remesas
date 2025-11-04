@@ -5,6 +5,8 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 from io import StringIO
 import re
+import tkinter as tk
+from tkinter import filedialog
 
 def extraer_texto_pdf(ruta_pdf: str) -> str:
     """
@@ -75,7 +77,7 @@ Texto del documento a procesar:
         print(f"❌ Error al procesar con Gemini: {e}")
         return None
 
-def procesar_pdf(ruta_pdf: str) -> bool:
+def procesar_pdf(ruta_pdf: str, directorio_salida: str) -> bool:
     """
     Procesa un archivo PDF: extrae texto, lo estructura con Gemini y genera un archivo TSV.
     Retorna True si el proceso fue exitoso, False en caso contrario.
@@ -111,10 +113,10 @@ def procesar_pdf(ruta_pdf: str) -> bool:
         df['Archivo_Origen'] = nombre_archivo
         
         # Asegurarse de que el directorio de salida existe
-        os.makedirs("output", exist_ok=True)
+        os.makedirs(directorio_salida, exist_ok=True)
         
         nombre_base = os.path.splitext(os.path.basename(ruta_pdf))[0]
-        ruta_salida = os.path.join("output", f"{nombre_base}.tsv")
+        ruta_salida = os.path.join(directorio_salida, f"{nombre_base}.tsv")
         
         df.to_csv(ruta_salida, sep='\t', index=False, encoding='utf-8')
         
@@ -128,9 +130,18 @@ def procesar_pdf(ruta_pdf: str) -> bool:
         print("---------------------------------")
         return False
 
+def seleccionar_carpeta():
+    """
+    Muestra un diálogo para seleccionar una carpeta y retorna la ruta seleccionada.
+    """
+    root = tk.Tk()
+    root.withdraw()  # Ocultar la ventana principal
+    carpeta = filedialog.askdirectory(title="Selecciona la carpeta con los archivos PDF")
+    return carpeta if carpeta else None
+
 def main():
     """
-    Función principal que procesa todos los PDFs en el directorio `my_pdfs`.
+    Función principal que procesa todos los PDFs en el directorio seleccionado.
     """
     load_dotenv()
     api_key = os.getenv("GOOGLE_API_KEY")
@@ -141,9 +152,14 @@ def main():
     genai.configure(api_key=api_key)
     print("✓ API Key de Google configurada.")
     
-    directorio_pdfs = "my_pdfs"
+    # Mostrar diálogo para seleccionar carpeta
+    directorio_pdfs = seleccionar_carpeta()
+    if not directorio_pdfs:
+        print("❌ Error: No se seleccionó ninguna carpeta.")
+        return
+    
     if not os.path.exists(directorio_pdfs):
-        print(f"❌ Error: El directorio '{directorio_pdfs}' no existe. Por favor, créalo y añade tus PDFs.")
+        print(f"❌ Error: El directorio '{directorio_pdfs}' no existe.")
         return
         
     archivos_pdf = [f for f in os.listdir(directorio_pdfs) if f.lower().endswith('.pdf')]
@@ -154,10 +170,14 @@ def main():
     print(f"📁 Encontrados {len(archivos_pdf)} PDF(s) para procesar.")
     
     # Procesar cada PDF y mantener un registro de los archivos procesados exitosamente
+    # Crear el directorio de salida dentro de la carpeta seleccionada
+    directorio_salida = os.path.join(directorio_pdfs, 'output')
+    os.makedirs(directorio_salida, exist_ok=True)
+
     archivos_procesados = []
     for archivo in archivos_pdf:
         ruta_completa = os.path.join(directorio_pdfs, archivo)
-        if procesar_pdf(ruta_completa):
+        if procesar_pdf(ruta_completa, directorio_salida):
             archivos_procesados.append(archivo)
     
     # Combinar todos los TSV procesados en un solo archivo
@@ -166,7 +186,7 @@ def main():
         dfs = []
         for archivo in archivos_procesados:
             nombre_base = os.path.splitext(archivo)[0]
-            ruta_tsv = os.path.join("output", f"{nombre_base}.tsv")
+            ruta_tsv = os.path.join(directorio_salida, f"{nombre_base}.tsv")
             try:
                 # Leer el TSV sin encabezados y agregar la columna con el nombre del PDF
                 columnas = [
@@ -186,7 +206,7 @@ def main():
             df_combinado = pd.concat(dfs, ignore_index=True)
             
             # Guardar el archivo combinado
-            ruta_combinado = os.path.join("output", "todos_los_documentos.tsv")
+            ruta_combinado = os.path.join(directorio_salida, "todos_los_documentos.tsv")
             df_combinado.to_csv(ruta_combinado, sep='\t', index=False, encoding='utf-8')
             print(f"\n✅ Archivo combinado creado en: {ruta_combinado}")
             print(f"   Total de registros: {len(df_combinado)}")

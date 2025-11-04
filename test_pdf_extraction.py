@@ -60,12 +60,27 @@ def probar_extraccion_pdf(ruta_pdf: str) -> str:
         print(f"❌ Error al procesar el PDF: {str(e)}")
         return None
 
+def seleccionar_carpeta():
+    """
+    Muestra un diálogo para seleccionar una carpeta y retorna la ruta seleccionada.
+    """
+    import tkinter as tk
+    from tkinter import filedialog
+    
+    root = tk.Tk()
+    root.withdraw()  # Ocultar la ventana principal
+    carpeta = filedialog.askdirectory(title="Selecciona la carpeta con los archivos PDF")
+    return carpeta if carpeta else None
+
 def main_prueba():
     """
     Función principal para probar la extracción de PDFs
     """
-    # Directorio que contiene los PDFs
-    directorio_pdfs = "my_pdfs"
+    # Mostrar diálogo para seleccionar carpeta
+    directorio_pdfs = seleccionar_carpeta()
+    if not directorio_pdfs:
+        print("❌ Error: No se seleccionó ninguna carpeta.")
+        return
     
     if not os.path.exists(directorio_pdfs):
         print(f"❌ Error: No se encuentra el directorio {directorio_pdfs}")

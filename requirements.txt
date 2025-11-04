@@ -2,3 +2,4 @@ google-generativeai
 PyMuPDF
 pandas
 python-dotenv
+tk  # Para el selector de carpetas (generalmente viene incluido con Python)
