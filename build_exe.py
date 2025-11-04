@@ -3,6 +3,32 @@ import os
 import sys
 from pathlib import Path
 
+# Generar icono válido con Pillow para evitar errores de conversión
+def create_icon(path_icon: str):
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except Exception:
+        # Pillow no está disponible; el build fallará más adelante si no existe el icono
+        return
+
+    # Crear imagen simple (256x256) con un texto corto
+    size = (256, 256)
+    img = Image.new('RGBA', size, (40, 120, 200, 255))
+    draw = ImageDraw.Draw(img)
+    try:
+        # Intentar cargar una fuente del sistema, si falla usar la fuente por defecto
+        font = ImageFont.truetype('arial.ttf', 80)
+    except Exception:
+        font = ImageFont.load_default()
+
+    text = "R"
+    w, h = draw.textsize(text, font=font)
+    draw.text(((size[0]-w)/2, (size[1]-h)/2), text, font=font, fill=(255,255,255,255))
+
+    # Guardar como .ico
+    os.makedirs(os.path.dirname(path_icon), exist_ok=True)
+    img.save(path_icon, format='ICO')
+
 def create_version_file():
     """Crea el archivo de versión para el ejecutable"""
     version_file = """
@@ -44,6 +70,12 @@ def main():
     # Crear archivo de versión
     create_version_file()
     
+    # Asegurarse de tener un icono válido (se generará si falta)
+    icon_path = os.path.join(current_dir, 'resources', 'app_icon.ico')
+    if not os.path.exists(icon_path):
+        print(f"⚙️  No se encontró icono en {icon_path}, generando uno automáticamente...")
+        create_icon(icon_path)
+    
     # Definir los archivos y opciones para PyInstaller
     options = [
         'main.py',  # Script principal
@@ -59,7 +91,7 @@ def main():
         '--hidden-import', 'google.generativeai',
         '--hidden-import', 'pandas',
         '--hidden-import', 'fitz',
-        '--hidden-import', 'python-dotenv',
+    '--hidden-import', 'dotenv',
     ]
     
     # Agregar archivos de datos
